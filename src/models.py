@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey, Column, Table
 db = SQLAlchemy()
 # le he puesto comentarios a este codigo porque voy a volver en un futuro :)
 favorite_table = Table(
-    "favorite",
+    "favorites",
     db.metadata,
     Column("user_id", ForeignKey("user.id"), primary_key=True),
     Column("character_id", ForeignKey("character.id"), primary_key=True)
@@ -19,7 +19,7 @@ class User(db.Model):
     email: Mapped[str] = mapped_column(
         String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
-    favorite: Mapped[list["Character"]] = db.relationship(
+    favorites: Mapped[list["Character"]] = db.relationship(
         "Character",
         secondary=favorite_table,
         # relacion bideccional con character :') se llenan estas tablas.
@@ -28,8 +28,9 @@ class User(db.Model):
     def serialize(self):
         return {
             "id": self.id,
+            "name": self.name,
             "email": self.email,
-            "favorite_characters": self.favorite_characters
+            "favorites": self.favorites
         }
 
 
@@ -47,7 +48,7 @@ class Character(db.Model):
     favorites_by: Mapped[list[User]] = db.relationship(
         "User",
         secondary=favorite_table,# relacion bideccional con user :')))))
-        back_populates="favorite")
+        back_populates="favorites")
 
 
     def serialize(self):
@@ -55,7 +56,8 @@ class Character(db.Model):
             "id": self.id,
             "name": self.name,
             "image": self.image,
-            "quote": self.quote
+            "quote": self.quote,
+            "location_id": self.location.serialize() if self.location else None
         }
 
 
@@ -68,5 +70,5 @@ class Location(db.Model):  # una locacion puede tener varios personajes, pero un
         return {
             "id": self.id,
             "name": self.name,
-            "character_location": self.character_location
+            #"character_location": self.character_location
         }
