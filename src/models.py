@@ -30,7 +30,7 @@ class User(db.Model):
             "id": self.id,
             "name": self.name,
             "email": self.email,
-            "favorites": self.favorites
+            "favorites": [character.serialize() for character in self.favorites]
         }
 
 

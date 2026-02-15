@@ -4,14 +4,14 @@ from app import db
 
 api = Blueprint("api", __name__)
 
-#r para obtener todoslos usuarios
+#Obtener todos los usuarios
 @api.route("/users", methods=["GET"])
 def get_users():
     user = User.query.all()
     response= [user.serialize()for user in user] #list comprehension
     return jsonify(response), 200
 
-#r para obtener un solo usuario 
+# obtener un solo usuario 
 @api.route("/users/<int:user_id>", methods=["GET"])
 def get_user(user_id):
     user = User.query.get(user_id)
@@ -59,8 +59,8 @@ def update_user(user_id):
     db.session.commit()
     return jsonify(user.serialize()), 200
 
-#agregar un personaje a favoritos de un usuario
-@api.route("users/<int:user_id>/favorites", methods=["POST"])
+
+@api.route("/users/<int:user_id>/favorites", methods=["POST"])
 def add_favorite(user_id):
     user = User.query.get(user_id)
     if not user:
@@ -75,6 +75,7 @@ def add_favorite(user_id):
     user.favorites.append(character)
     db.session.commit()
     return jsonify({"message": "Character added to favorites"}), 200
+
 
 #characters zone
 @api.route("/characters", methods=["GET"])
@@ -159,3 +160,63 @@ def get_locations():
     locations = Location.query.all()
     response = [location.serialize() for location in locations]
     return jsonify(response), 200
+
+@api.route("/location/<int:location_id>", methods=["GET"])
+def get_location(location_id):
+    location = Location.query.get(location_id)
+    if not location:
+        return jsonify({"message": "Location not found"}), 404
+    return jsonify(location.serialize()), 200
+
+@api.route("/location/<int:location_id>", methods=["DELETE"])
+def delete_location(location_id):
+    location = Location.query.get(location_id)
+    if not location:
+        return jsonify({"message": "Location not found"}), 404
+    db.session.delete(location)
+    db.session.commit()
+    return jsonify({"message": "Location deleted successfully"}), 200
+
+@api.route("/location/<int:location_id>", methods=["PUT"])
+def update_location(location_id):
+    location = Location.query.get(location_id)
+    if not location:
+        return jsonify({"message": "Location not found"}), 404
+    
+    data = request.get_json()
+    location.name = data.get("name", location.name)
+
+    db.session.commit()
+    return jsonify(location.serialize()), 200
+
+
+
+
+
+@api.route("/users/<int:user_id>/favorites", methods=["GET"])
+def get_favorites(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    
+    favorites = [character.serialize() for character in user.favorites]
+    return jsonify(favorites), 200
+
+
+@api.route("/users/<int:user_id>/favorites/<int:character_id>", methods=["DELETE"])
+def remove_favorite(user_id, character_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    
+    character = Character.query.get(character_id)
+    if not character:
+        return jsonify({"message": "Character not found"}), 404
+    
+    if character in user.favorites:
+        user.favorites.remove(character)
+        db.session.commit()
+        return jsonify({"message": "Character removed from favorites"}), 200
+    else:
+        return jsonify({"message": "Character not in favorites"}), 404
+    
